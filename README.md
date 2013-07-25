@@ -7,16 +7,16 @@ To test it (in a fast way) use an x86 emulator like qemu (or bochs).
 http://wiki.qemu.org/
 
 
-== Build ==
+* Build
 To compile:
 $ make clean
 $ make
 
-== Run ==
+* Run
 To test:
 $ sh script/run.sh
 
-== Debug ==
+* Debug
 To debug:
 $ sh scripts/debug.sh
 
