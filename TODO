@@ -1,2 +1,3 @@
 *) Implement irq_attach() and irq_dispatch()
-*) Implement TIMER init
+*) Implement timer init and irq handler
+*) Implement keyboard irq handler
