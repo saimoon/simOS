@@ -1,0 +1,9 @@
+# Compiled source #
+###################
+*.o
+*.bin
+
+# Config files    #
+###################
+*.sublime-project
+*.sublime-workspace
