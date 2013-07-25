@@ -1,0 +1,2 @@
+*) Implement irq_attach() and irq_dispatch()
+*) Implement TIMER init
