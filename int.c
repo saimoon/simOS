@@ -39,17 +39,63 @@ idtr_t kidtr;                           // Interrupt Descriptor Table Register
 
 void *int_handler_table[NR_IRQS];       // interrupt handler function table
 
-
+uint8_t kbd_us[128] =
+{
+    0,  27, '1', '2', '3', '4', '5', '6', '7', '8',     /* 9 */
+  '9', '0', '-', '=', '\b',     /* Backspace */
+  '\t',                 /* Tab */
+  'q', 'w', 'e', 'r',   /* 19 */
+  't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', /* Enter key */
+    0,                  /* 29   - Control */
+  'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',     /* 39 */
+ '\'', '`',   0,                /* Left shift */
+ '\\', 'z', 'x', 'c', 'v', 'b', 'n',                    /* 49 */
+  'm', ',', '.', '/',   0,                              /* Right shift */
+  '*',
+    0,  /* Alt */
+  ' ',  /* Space bar */
+    0,  /* Caps lock */
+    0,  /* 59 - F1 key ... > */
+    0,   0,   0,   0,   0,   0,   0,   0,
+    0,  /* < ... F10 */
+    0,  /* 69 - Num lock*/
+    0,  /* Scroll Lock */
+    0,  /* Home key */
+    0,  /* Up Arrow */
+    0,  /* Page Up */
+  '-',
+    0,  /* Left Arrow */
+    0,
+    0,  /* Right Arrow */
+  '+',
+    0,  /* 79 - End key*/
+    0,  /* Down Arrow */
+    0,  /* Page Down */
+    0,  /* Insert Key */
+    0,  /* Delete Key */
+    0,   0,   0,
+    0,  /* F11 Key */
+    0,  /* F12 Key */
+    0,  /* All other keys are undefined */
+};  
 
 /* ====== int handler functions ====== */
 
-static uint32_t *common_handler(int irq, uint32_t *regs)
+static uint32_t *common_handler(uint8_t irq, uint32_t *regs)
 {
     // Deliver the IRQ
 //  irq_dispatch(irq, regs);
-    
-    console__printf("Unexpected interrupt %d\n", irq);
-    HALT();
+  
+    if (irq <= ISR31) {
+        console__printf("Unexpected interrupt %d\n", irq);
+        HALT();
+    }
+
+    // keyboard test
+    if (irq == IRQ1) {
+        uint8_t ch = inb(0x60);
+        console__printf("Key: %c\n", kbd_us[ch]);
+    }
 
     return regs; 
 }
@@ -60,7 +106,7 @@ uint32_t *isr_handler(uint32_t *regs)
     uint32_t *ret;
 
     // Dispatch the interrupt
-    ret = common_handler((int)regs[REG_IRQNO], regs);
+    ret = common_handler((uint8_t)regs[REG_IRQNO], regs);
 
     return ret;
 }
@@ -69,19 +115,19 @@ uint32_t *isr_handler(uint32_t *regs)
 uint32_t *irq_handler(uint32_t *regs)
 {
     uint32_t *ret;
-    int irq;
+    uint8_t irq;
 
     // Get the IRQ number
-    irq = (int)regs[REG_IRQNO];
+    irq = (uint8_t)regs[REG_IRQNO];
 
     // Send an EOI (end of interrupt) signal to the PICs
     if (irq >= IRQ8) {
         // Send reset signal to slave
-        outb(PIC_OCW2_EOI_NONSPEC, PIC2_OCW2);
+        outb(PIC_EOI, PIC_SLAVE_CMD);
     }
 
     // Send reset signal to master
-    outb(PIC_OCW2_EOI_NONSPEC, PIC1_OCW2);
+    outb(PIC_EOI, PIC_MASTER_CMD);
 
     // Dispatch the interrupt
     ret = common_handler(irq, regs);
@@ -109,6 +155,68 @@ static inline void __load_idt(void)
   asm("lidtl %0" : : "m" (kidtr));
 }
 
+// Init Master and Slave PIC
+// When the computer boots, the default interrupt mappings are:
+//    IRQ 0..7 - INT 0x8..0xF
+//    IRQ 8..15 - INT 0x70..0x77
+// This causes us somewhat of a problem. The master's IRQ mappings
+// (0x8-0xF) conflict with the interrupt numbers used by the CPU to
+// signal exceptions and faults. The normal thing to do is to remap the
+// PICs so that IRQs 0..15 correspond to ISRs 32..47 (31 being the last
+// CPU-used ISR).
+static void __remap_pic(void)
+{
+    // Mask all interrupts
+    outb(PIC_MASTER_MASK, PIC_MASTER_DATA);
+    outb(PIC_SLAVE_MASK, PIC_SLAVE_DATA);
+
+    // ICW1
+    outb((PIC_ICW1_INIT | PIC_ICW1_IC4), PIC_MASTER_CMD);   // Send the INIT command to PIC1
+    outb((PIC_ICW1_INIT | PIC_ICW1_IC4), PIC_SLAVE_CMD);    // Send the INIT command to PIC2
+
+    // ICW2
+    outb(IRQ0_VECTOR, PIC_MASTER_DATA);         // Set PIC1 Start Vector
+    outb(IRQ8_VECTOR, PIC_SLAVE_DATA);          // Set PIC2 Start Vector
+
+    // ICW3
+    outb(PIC_ICW3_M_CASCADE, PIC_MASTER_DATA);  // Set PIC1 as master
+    outb(PIC_ICW3_S_CASCADE, PIC_SLAVE_DATA);   // Set PIC2 as slave
+
+    // ICW4
+    outb(PIC_ICW4_8086, PIC_MASTER_DATA);       // Select 8086 mode for PIC1
+    outb(PIC_ICW4_8086, PIC_SLAVE_DATA);        // Select 8086 mode for PIC2
+
+    // Mask all interrupts (in this way ints remains masked and disabled)
+    outb(PIC_MASTER_MASK, PIC_MASTER_DATA);
+    outb(PIC_SLAVE_MASK, PIC_SLAVE_DATA);
+}
+
+
+// Return the interrupt mask
+// arg: pic PIC_MASTER or PIC_SLAVE
+// ret: uint8_t Mask or 0 on error
+uint8_t __get_picmask(uint8_t pic)
+{
+    uint8_t mask;
+    if ((pic != PIC_MASTER_DATA) && (pic != PIC_SLAVE_DATA)) {
+        return(0);
+    } 
+    else {
+        mask = inb(pic);
+        return(mask);
+    }
+}
+
+// Set the interrupt mask
+// arg1: uint8_t Mask
+// arg2: pic PIC_MASTER or PIC_SLAVE
+void __set_picmask(uint8_t mask, uint8_t pic)
+{
+    if ((pic == PIC_MASTER_DATA) || (pic == PIC_SLAVE_DATA)) {
+        outb(mask, pic);
+    }
+}
+
 
 
 /* ====== PUBLIC int functions ====== */
@@ -116,6 +224,9 @@ static inline void __load_idt(void)
 void int__idt_init(void)
 {
     memset(&kidt, 0, sizeof(idt_t)*IDT_ENTRIES);
+
+    // remap PICs
+    __remap_pic();
 
     __set_idt(ISR0, (uint32_t)vector_isr0, KERNEL_CS, DEF_INTGATE_FLAGS);
     __set_idt(ISR1, (uint32_t)vector_isr1, KERNEL_CS, DEF_INTGATE_FLAGS);
@@ -171,4 +282,61 @@ void int__idt_init(void)
     kidtr.base  = (uint32_t)&kidt;
 
     __load_idt();
+}
+
+
+void int__enable_irq(uint8_t irq)
+{
+    uint8_t pic;
+    uint8_t regbit;
+    uint8_t mask;
+
+    if (irq >= IRQ0) {
+        // Map the IRQ IMR regiser to a PIC and a bit number */
+
+        if (irq <= IRQ7) {
+            pic = PIC_MASTER_DATA;
+            regbit  = (1 << (irq - IRQ0));
+        }
+        else if (irq <= IRQ15) {
+            pic = PIC_SLAVE_DATA;
+            regbit  = (1 << (irq - IRQ8));
+        }
+        else {
+            return;
+        }
+
+        // Enable (unmask) the interrupt
+        mask = __get_picmask(pic);
+        mask &= ~regbit;
+        __set_picmask(mask, pic);
+    }
+}
+
+void int__disable_irq(uint8_t irq)
+{
+    uint8_t pic;
+    uint8_t regbit;
+    uint8_t mask;
+
+    if (irq >= IRQ0) {
+        // Map the IRQ IMR regiser to a PIC and a bit number */
+
+        if (irq <= IRQ7) {
+            pic = PIC_MASTER_DATA;
+            regbit  = (1 << (irq - IRQ0));
+        }
+        else if (irq <= IRQ15) {
+            pic = PIC_SLAVE_DATA;
+            regbit  = (1 << (irq - IRQ8));
+        }
+        else {
+            return;
+        }
+
+        // Enable (unmask) the interrupt
+        mask = __get_picmask(pic);
+        mask |= regbit;
+        __set_picmask(mask, pic);
+    }
 }

@@ -31,6 +31,7 @@
 #include "kassert.h"
 #include "console.h"
 #include "mem.h"
+#include "int_vectors.h"
 #include "int.h"
 #include "multiboot.h"
 
@@ -84,9 +85,16 @@ void kernel_main(uint32_t magic, uint32_t multiboot_info_addr)
     int__idt_init();
     console__printf("* Init Interrupts\n");
 
-    // test interrupts 
-    __asm__ ("int $32");
+    // enable interrupts
+    int__enable_irq(IRQ0);
+    int__enable_irq(IRQ1);
+    sti();
+    console__printf("* Enable Interrupts\n");
 
+/*
+    // test interrupts 
+    __asm__ ("int $34");
+*/
 /* 
     // test interrupts
     void (*x)(void) = 0x00000000;

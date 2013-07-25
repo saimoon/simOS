@@ -39,71 +39,31 @@
 #define REG_SS           (15)  /* "    " "" "     " "" "       " "        " */
 
 
-/* Programmable Interrupt Controller (PIC) */
+// Programmable Interrupt Controller (PIC)
+#define PIC_MASTER_CMD     		0x20
+#define PIC_MASTER_DATA         0x21
+#define PIC_SLAVE_CMD           0xA0
+#define PIC_SLAVE_DATA          0xA1
 
-// Operational Control Words
-// The first instruction the Operation Control Word 1 (OCW1) to set which
-// IRQ's to mask and which IRQ's not to.
+#define PIC_MASTER              PIC_MASTER_DATA
+#define PIC_SLAVE               PIC_SLAVE_DATA
 
-#define PIC1_OCW1           0x20
-#define PIC2_OCW1           0xa0
+// Masks for PIC commands
+#define PIC_ICW1_IC4            0x01
+#define PIC_ICW1_INIT           0x10
 
-#define PIC1_OCW1_IRQ0		(1 << 0) /* IRQ0  System Timer */
-#define PIC1_OCW1_IRQ1      (1 << 1) /* IRQ1  Keyboard */
-#define PIC1_OCW1_IRQ2      (1 << 2) /* IRQ2  PIC2 */
-#define PIC1_OCW1_IRQ3      (1 << 3) /* IRQ3  Serial Port */
-#define PIC1_OCW1_IRQ4      (1 << 4) /* IRQ4  Serial Port */
-#define PIC1_OCW1_IRQ5      (1 << 5) /* IRQ5  Reserved/Sound Card */
-#define PIC1_OCW1_IRQ6      (1 << 6) /* IRQ6  Floppy Disk Controller */
-#define PIC1_OCW1_IRQ7      (1 << 7) /* IRQ7  Parallel Port */
-#define PIC1_OCW1_ALL
+#define PIC_ICW4_8086           0x01
+#define PIC_ICW4_AEOI           0x02
+#define PIC_EOI                 0x20
 
-#define PIC2_OCW1_IRQ8      (1 << 0) /* IRQ8  Real Time Clock */
-#define PIC2_OCW1_IRQ9      (1 << 1) /* IRQ9  Redirected IRQ2 */
-#define PIC2_OCW1_IRQ10     (1 << 2) /* IRQ10 Reserved */
-#define PIC2_OCW1_IRQ11     (1 << 3) /* IRQ11 Reserved */
-#define PIC2_OCW1_IRQ12     (1 << 4) /* IRQ12 PS/2 Mouse */
-#define PIC2_OCW1_IRQ13     (1 << 5) /* IRQ13 Maths Co-Processor */
-#define PIC2_OCW1_IRQ14     (1 << 6) /* IRQ14 Hard Disk Drive */
-#define PIC2_OCW1_IRQ15     (1 << 7) /* IRQ15 Reserved */
-#define PIC2_OCW1_ALL
+#define PIC_ICW3_M_CASCADE  	0x04
+#define PIC_ICW3_S_CASCADE  	0x02
 
-// Operation Control Word 2 selects how the End of Interrupt (EOI) procedure
-// works. The only thing of interest to us in this register is the non-
-// specific EOI command, which we must send at the end of our ISR's.
+#define IRQ0_VECTOR             0x20
+#define IRQ8_VECTOR             0x28
 
-#define PIC1_OCW2          	0x20
-#define PIC2_OCW2           0xa0
-
-#define PIC_OCW2_ACT_SHIFT   (0)
-#define PIC_OCW2_ACT_MASK    (7 << PIC_OCW2_ACT_SHIFT)
-#define PIC1_OCW2_ACT_IRQ0   (0 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 0 */
-#define PIC1_OCW2_ACT_IRQ1   (1 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 1 */
-#define PIC1_OCW2_ACT_IRQ2   (2 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 2 */
-#define PIC1_OCW2_ACT_IRQ3   (3 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 3 */
-#define PIC1_OCW2_ACT_IRQ4   (4 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 4 */
-#define PIC1_OCW2_ACT_IRQ5   (5 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 5 */
-#define PIC1_OCW2_ACT_IRQ6   (6 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 6 */
-#define PIC1_OCW2_ACT_IRQ7   (7 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 7 */
-
-#define PIC2_OCW2_ACT_IRQ8   (0 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 8 */
-#define PIC2_OCW2_ACT_IRQ9   (1 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 9 */
-#define PIC2_OCW2_ACT_IRQ10  (2 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 10 */
-#define PIC2_OCW2_ACT_IRQ11  (3 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 11 */
-#define PIC2_OCW2_ACT_IRQ12  (4 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 12 */
-#define PIC2_OCW2_ACT_IRQ13  (5 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 13 */
-#define PIC2_OCW2_ACT_IRQ14  (6 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 14 */
-#define PIC2_OCW2_ACT_IRQ15  (7 << PIC_OCW2_ACT_SHIFT) /* Act on IRQ 15 */
-
-#define PIC_OCW2_EOI_SHIFT   (5)
-#define PIC_OCW2_EOI_MASK    (7 << PIC_OCW2_EOI_SHIFT)
-#define PIC_OCW2_EOI_AUTO    (0 << PIC_OCW2_EOI_SHIFT) /* Rotate in Auto EOI Mode (Clear) */
-#define PIC_OCW2_EOI_NONSPEC (1 << PIC_OCW2_EOI_SHIFT) /* Non Specific EOI */
-#define PIC_OCW2_EOI_SPEC    (3 << PIC_OCW2_EOI_SHIFT) /* Specific EOI */
-#define PIC_OCW2_EOI_RAUTO   (4 << PIC_OCW2_EOI_SHIFT) /* Rotate in Auto EOI Mode (Set) */
-#define PIC_OCW2_EOI_RNSPEC  (5 << PIC_OCW2_EOI_SHIFT) /* Rotate on Non-Specific EOI */
-#define PIC_OCW2_EOI_PRIO    (6 << PIC_OCW2_EOI_SHIFT) /* Set Priority Command (Use Bits 2:0) */
-#define PIC_OCW2_EOI_RSPEC   (7 << PIC_OCW2_EOI_SHIFT) /* Rotate on Specific EOI (Use Bits 2:0) */
+#define PIC_MASTER_MASK         0xFB 	// We can't disable IRQ2 because slave it's there
+#define PIC_SLAVE_MASK          0xFF
 
 
 
@@ -183,6 +143,8 @@ extern void vector_irq15(void);
 
 /* PUBLIC int functions */
 void int__idt_init(void);
+void int__enable_irq(uint8_t irq);
+void int__disable_irq(uint8_t irq);
 
 
 #endif /* SIMOS_INT_H */

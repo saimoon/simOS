@@ -59,12 +59,22 @@ size_t strlen(const char* str)
 
 inline uint8_t inb(uint16_t port)
 {
-        uint8_t value;
-        asm volatile("inb %1, %0" : "=a" (value) : "dN" (port));
-        return(value);
+    uint8_t value;
+    asm volatile("inb %1, %0" : "=a" (value) : "dN" (port));
+    return(value);
 }
 
 inline void outb(uint8_t value, uint16_t port)
 {
-        asm volatile("outb %0, %1" : : "a" (value), "dN" (port));
+    asm volatile("outb %0, %1" : : "a" (value), "dN" (port));
+}
+
+inline void cli(void)
+{
+    asm volatile("cli");
+}
+
+inline void sti(void)
+{
+    asm volatile("sti");
 }
