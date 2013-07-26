@@ -34,84 +34,54 @@
 
 /* ====== Globals ====== */
 
-idt_t  kidt[IDT_ENTRIES+1];             // Interrupt Descriptor Table
-idtr_t kidtr;                           // Interrupt Descriptor Table Register
+idt_t  g_kidt[IDT_ENTRIES+1];           // Interrupt Descriptor Table
+idtr_t g_kidtr;                         // Interrupt Descriptor Table Register
 
-void *int_handler_table[NR_IRQS];       // interrupt handler function table
+irqvfunc_t g_irqvector[NR_IRQS];        // IRQ vector function table
 
-uint8_t kbd_us[128] =
+
+/* ====== IRQ handler functions ====== */
+
+// Default irq handler when the irq is not attached to a custom handler
+void irq_unhandled_isr(uint8_t irq, uint32_t *context)
 {
-    0,  27, '1', '2', '3', '4', '5', '6', '7', '8',     /* 9 */
-  '9', '0', '-', '=', '\b',     /* Backspace */
-  '\t',                 /* Tab */
-  'q', 'w', 'e', 'r',   /* 19 */
-  't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', /* Enter key */
-    0,                  /* 29   - Control */
-  'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',     /* 39 */
- '\'', '`',   0,                /* Left shift */
- '\\', 'z', 'x', 'c', 'v', 'b', 'n',                    /* 49 */
-  'm', ',', '.', '/',   0,                              /* Right shift */
-  '*',
-    0,  /* Alt */
-  ' ',  /* Space bar */
-    0,  /* Caps lock */
-    0,  /* 59 - F1 key ... > */
-    0,   0,   0,   0,   0,   0,   0,   0,
-    0,  /* < ... F10 */
-    0,  /* 69 - Num lock*/
-    0,  /* Scroll Lock */
-    0,  /* Home key */
-    0,  /* Up Arrow */
-    0,  /* Page Up */
-  '-',
-    0,  /* Left Arrow */
-    0,
-    0,  /* Right Arrow */
-  '+',
-    0,  /* 79 - End key*/
-    0,  /* Down Arrow */
-    0,  /* Page Down */
-    0,  /* Insert Key */
-    0,  /* Delete Key */
-    0,   0,   0,
-    0,  /* F11 Key */
-    0,  /* F12 Key */
-    0,  /* All other keys are undefined */
-};  
+    console__printf("Fatal Error: Unexpected interrupt %d\n", irq);
+    HALT();
+}
 
-/* ====== int handler functions ====== */
 
-static uint32_t *common_handler(uint8_t irq, uint32_t *regs)
+// Dispatch irq to its custom vector handler
+static uint32_t *irq_dispatch(uint8_t irq, uint32_t *regs)
 {
-    // Deliver the IRQ
-//  irq_dispatch(irq, regs);
-  
-    if (irq <= ISR31) {
-        console__printf("Unexpected interrupt %d\n", irq);
-        HALT();
+    irqvfunc_t vector;
+
+    if ((irq >= NR_IRQS) || (g_irqvector[irq] == NULL)) {
+        vector = irq_unhandled_isr;
+    }
+    else {
+        vector = g_irqvector[irq];
     }
 
-    // keyboard test
-    if (irq == IRQ1) {
-        uint8_t ch = inb(0x60);
-        console__printf("Key: %c\n", kbd_us[ch]);
-    }
+    // Dispatch to the interrupt handler
+    vector(irq, regs);
 
     return regs; 
 }
 
 
+// Initial ISR handler
 uint32_t *isr_handler(uint32_t *regs)
 {
     uint32_t *ret;
 
     // Dispatch the interrupt
-    ret = common_handler((uint8_t)regs[REG_IRQNO], regs);
+    ret = irq_dispatch((uint8_t)regs[REG_IRQNO], regs);
 
     return ret;
 }
 
 
+// Initial IRQ handler
 uint32_t *irq_handler(uint32_t *regs)
 {
     uint32_t *ret;
@@ -130,7 +100,7 @@ uint32_t *irq_handler(uint32_t *regs)
     outb(PIC_EOI, PIC_MASTER_CMD);
 
     // Dispatch the interrupt
-    ret = common_handler(irq, regs);
+    ret = irq_dispatch(irq, regs);
 
     return ret;
 }
@@ -139,21 +109,23 @@ uint32_t *irq_handler(uint32_t *regs)
 
 /* ====== PRIVATE int functions ====== */
 
+// Set an Interrupt Descriptor Table entry
 static void __set_idt(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags)
 {
-   kidt[num].lobase   = base & 0xFFFF;
-   kidt[num].hibase   = (base >> 16) & 0xFFFF;
-   kidt[num].sel      = sel;
-   kidt[num].zero     = 0;
-   kidt[num].flags    = flags;
+   g_kidt[num].lobase   = base & 0xFFFF;
+   g_kidt[num].hibase   = (base >> 16) & 0xFFFF;
+   g_kidt[num].sel      = sel;
+   g_kidt[num].zero     = 0;
+   g_kidt[num].flags    = flags;
 }
 
 
 // Load Interrupt Description Table
 static inline void __load_idt(void)
 {
-  asm("lidtl %0" : : "m" (kidtr));
+  asm("lidtl %0" : : "m" (g_kidtr));
 }
+
 
 // Init Master and Slave PIC
 // When the computer boots, the default interrupt mappings are:
@@ -192,10 +164,20 @@ static void __remap_pic(void)
 }
 
 
+// Init irq vector table
+static void __init_irqvectors(void)
+{
+    uint8_t i;
+    for (i=0; i<NR_IRQS; i++) {
+        g_irqvector[i] = irq_unhandled_isr;
+    }
+}
+
+
 // Return the interrupt mask
 // arg: pic PIC_MASTER or PIC_SLAVE
 // ret: uint8_t Mask or 0 on error
-uint8_t __get_picmask(uint8_t pic)
+static uint8_t __get_picmask(uint8_t pic)
 {
     uint8_t mask;
     if ((pic != PIC_MASTER_DATA) && (pic != PIC_SLAVE_DATA)) {
@@ -207,10 +189,11 @@ uint8_t __get_picmask(uint8_t pic)
     }
 }
 
+
 // Set the interrupt mask
 // arg1: uint8_t Mask
 // arg2: pic PIC_MASTER or PIC_SLAVE
-void __set_picmask(uint8_t mask, uint8_t pic)
+static void __set_picmask(uint8_t mask, uint8_t pic)
 {
     if ((pic == PIC_MASTER_DATA) || (pic == PIC_SLAVE_DATA)) {
         outb(mask, pic);
@@ -221,9 +204,13 @@ void __set_picmask(uint8_t mask, uint8_t pic)
 
 /* ====== PUBLIC int functions ====== */
 
+// Init interrupts
 void int__idt_init(void)
 {
-    memset(&kidt, 0, sizeof(idt_t)*IDT_ENTRIES);
+    memset(&g_kidt, 0, sizeof(idt_t)*IDT_ENTRIES);
+
+    // init irq vectors
+    __init_irqvectors();
 
     // remap PICs
     __remap_pic();
@@ -278,13 +265,38 @@ void int__idt_init(void)
     __set_idt(IRQ14, (uint32_t)vector_irq14, KERNEL_CS, DEF_INTGATE_FLAGS);
     __set_idt(IRQ15, (uint32_t)vector_irq15, KERNEL_CS, DEF_INTGATE_FLAGS);
 
-    kidtr.limit = sizeof(idt_t) * IDT_ENTRIES;
-    kidtr.base  = (uint32_t)&kidt;
+    g_kidtr.limit = sizeof(idt_t) * IDT_ENTRIES;
+    g_kidtr.base  = (uint32_t)&g_kidt;
 
     __load_idt();
 }
 
 
+// Register an irq (attach) to its custom handler
+void int__irq_attach(uint8_t irq, irqvfunc_t isr)
+{
+    if (irq < NR_IRQS) {
+        uint32_t state;
+
+        state = int__irqsave();
+
+        // If the new ISR is NULL, then the ISR is being detached.
+        if (isr == NULL) {
+            int__disable_irq(irq);
+          
+            // Detaching the ISR really means re-attaching it to the
+            // unhanled exception handler
+            isr = irq_unhandled_isr;
+        }
+      
+        // Save the new ISR in the vector table
+        g_irqvector[irq] = isr;
+        int__irqrestore(state);
+    }
+}
+
+
+// Enable (unmask) the specified interrupt
 void int__enable_irq(uint8_t irq)
 {
     uint8_t pic;
@@ -292,7 +304,6 @@ void int__enable_irq(uint8_t irq)
     uint8_t mask;
 
     if (irq >= IRQ0) {
-        // Map the IRQ IMR regiser to a PIC and a bit number */
 
         if (irq <= IRQ7) {
             pic = PIC_MASTER_DATA;
@@ -313,6 +324,8 @@ void int__enable_irq(uint8_t irq)
     }
 }
 
+
+// Disable (mask) the specified interrupt
 void int__disable_irq(uint8_t irq)
 {
     uint8_t pic;
@@ -320,7 +333,6 @@ void int__disable_irq(uint8_t irq)
     uint8_t mask;
 
     if (irq >= IRQ0) {
-        // Map the IRQ IMR regiser to a PIC and a bit number */
 
         if (irq <= IRQ7) {
             pic = PIC_MASTER_DATA;
@@ -334,9 +346,68 @@ void int__disable_irq(uint8_t irq)
             return;
         }
 
-        // Enable (unmask) the interrupt
+        // Disable (mask) the interrupt
         mask = __get_picmask(pic);
         mask |= regbit;
         __set_picmask(mask, pic);
+    }
+}
+
+
+// get irq flags
+inline uint32_t int__irqflags()
+{
+    uint32_t flags;
+
+    asm volatile("pushf     \n"
+                 "pop %0    \n"
+                 : "=rm" (flags) : : "memory");
+    return flags;
+}
+
+
+// check the flags for irq disabled state
+inline bool int__irqdisabled(uint32_t flags)
+{
+    return ((flags & X86_FLAGS_IF) == 0);
+}
+
+
+// check the flags for irq enabled state
+inline bool int__irqenabled(uint32_t flags)
+{
+    return ((flags & X86_FLAGS_IF) != 0);
+}
+
+
+// Disable interrupts unconditionally
+inline void int__irqdisable(void)
+{
+    asm volatile("cli": : :"memory");
+}
+
+
+// Enable interrupts unconditionally
+inline void int__irqenable(void)
+{
+    asm volatile("sti": : :"memory");
+}
+
+
+// Disable interrupts and return previous interrupt state
+inline uint32_t int__irqsave(void)
+{
+  uint32_t flags = int__irqflags();
+  int__irqdisable();
+  return flags;
+}
+
+
+// Restore saved interrupts state
+inline void int__irqrestore(uint32_t flags)
+{
+  if (int__irqenabled(flags))
+    {
+      int__irqenable();
     }
 }

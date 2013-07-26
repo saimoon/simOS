@@ -27,8 +27,6 @@ void memcpy(void *dst, const void *src, size_t len);
 size_t strlen(const char* str);
 uint8_t inb(uint16_t port);
 void outb(uint8_t value, uint16_t port);
-void cli(void);
-void sti(void);
 
 
 #endif /* SIMOS_UTILS_H */

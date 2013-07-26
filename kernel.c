@@ -33,6 +33,8 @@
 #include "mem.h"
 #include "int_vectors.h"
 #include "int.h"
+#include "timer.h"
+#include "kbd.h"
 #include "multiboot.h"
 
 
@@ -57,11 +59,15 @@ void kernel_main(uint32_t magic, uint32_t multiboot_info_addr)
     console__initialize();
     console__write("Hello, I'm simOS.\nReady...\n\n");
 
+/*
     // Dump memory map
     mem__dump_map();
+*/
 
+/*    
     // Dump Multiboot info
     multiboot__dump_info(magic, multiboot_info_addr);
+*/
 
     // Init GDT
     mem__gdt_init();
@@ -85,10 +91,16 @@ void kernel_main(uint32_t magic, uint32_t multiboot_info_addr)
     int__idt_init();
     console__printf("* Init Interrupts\n");
 
+    // Init TIMER
+    timer__init();
+    console__printf("* Init Timer\n");
+    
+    // Init KBD
+    kbd__init();
+    console__printf("* Init Keyboard\n");
+
     // enable interrupts
-    int__enable_irq(IRQ0);
-    int__enable_irq(IRQ1);
-    sti();
+    int__irqenable();
     console__printf("* Enable Interrupts\n");
 
 /*

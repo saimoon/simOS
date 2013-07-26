@@ -40,37 +40,50 @@
 
 
 // Programmable Interrupt Controller (PIC)
-#define PIC_MASTER_CMD     		0x20
+#define PIC_MASTER_CMD          0x20
 #define PIC_MASTER_DATA         0x21
 #define PIC_SLAVE_CMD           0xA0
 #define PIC_SLAVE_DATA          0xA1
-
 #define PIC_MASTER              PIC_MASTER_DATA
 #define PIC_SLAVE               PIC_SLAVE_DATA
-
-// Masks for PIC commands
 #define PIC_ICW1_IC4            0x01
 #define PIC_ICW1_INIT           0x10
-
 #define PIC_ICW4_8086           0x01
 #define PIC_ICW4_AEOI           0x02
 #define PIC_EOI                 0x20
-
 #define PIC_ICW3_M_CASCADE  	0x04
 #define PIC_ICW3_S_CASCADE  	0x02
-
 #define IRQ0_VECTOR             0x20
 #define IRQ8_VECTOR             0x28
-
 #define PIC_MASTER_MASK         0xFB 	// We can't disable IRQ2 because slave it's there
 #define PIC_SLAVE_MASK          0xFF
 
 
+// FLAGS bits
+#define X86_FLAGS_CF            (1 << 0)  /* Bit 0:  Carry Flag */
+                                          /* Bit 1:  Reserved */
+#define X86_FLAGS_PF            (1 << 2)  /* Bit 2:  Parity Flag */
+                                          /* Bit 3:  Reserved */
+#define X86_FLAGS_AF            (1 << 4)  /* Bit 4:  Auxillary carry Flag */
+                                          /* Bit 5:  Reserved */
+#define X86_FLAGS_ZF            (1 << 6)  /* Bit 6:  Zero Flag */
+#define X86_FLAGS_SF            (1 << 7)  /* Bit 7:  Sign Flag */
+#define X86_FLAGS_TF            (1 << 8)  /* Bit 8:  Trap Flag */
+#define X86_FLAGS_IF            (1 << 9)  /* Bit 9:  Interrupt Flag */
+#define X86_FLAGS_DF            (1 << 10) /* Bit 10: Direction Flag */
+#define X86_FLAGS_OF            (1 << 11) /* Bit 11: Overflow Flag */
+#define X86_FLAGS_IOPL_SHIFT    (12)      /* Bits 12-13: IOPL mask (286+ only)*/
+#define X86_FLAGS_IOPL_MASK     (3 << X86_FLAGS_IOPL_SHIFT)
+#define X86_FLAGS_NT            (1 << 14) /* Bit 14: Nested Task */
+                                          /* Bit 15: Reserved */
+
+
 
 #define IDT_ENTRIES 0xFF			// number of IDT entries
-
 #define DEF_INTGATE_FLAGS 0x8E		//P=1 DPL=0 (interrupt gate descriptor)
 
+
+// Interrupt Descriptor Table
 typedef
 struct idt
 {
@@ -82,6 +95,7 @@ struct idt
 } __attribute__((packed))
 idt_t;
 
+// Interrupt Descriptor Table Register
 typedef
 struct idtr
 {
@@ -91,6 +105,11 @@ struct idtr
 idtr_t;
 
 
+// IRQ vector function type
+typedef void (*irqvfunc_t)(uint8_t irq, uint32_t *context);
+
+
+//  Interrupt Vectors
 extern void vector_isr0(void);
 extern void vector_isr1(void);
 extern void vector_isr2(void);
@@ -141,10 +160,19 @@ extern void vector_irq14(void);
 extern void vector_irq15(void);
 
 
+
 /* PUBLIC int functions */
 void int__idt_init(void);
+void int__irq_attach(uint8_t irq, irqvfunc_t isr);
 void int__enable_irq(uint8_t irq);
 void int__disable_irq(uint8_t irq);
+uint32_t int__irqflags();
+bool int__irqdisabled(uint32_t flags);
+bool int__irqenabled(uint32_t flags);
+void int__irqdisable(void);
+void int__irqenable(void);
+uint32_t int__irqsave(void);
+void int__irqrestore(uint32_t flags);
 
 
 #endif /* SIMOS_INT_H */

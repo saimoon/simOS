@@ -242,6 +242,7 @@ void mem__paging_init(uint32_t multiboot_info_addr)
 
     __get_multiboot_info(mbi, &kmemlayout);
 
+/*
     console__printf("Physic Memory Layout:\n");
     console__printf("MemSize (Kb) = 0x%x\n", kmemlayout.memsize_kb);
     console__printf("MemSize (Num Frames) = 0x%x\n", kmemlayout.memsize_nframes);
@@ -249,6 +250,7 @@ void mem__paging_init(uint32_t multiboot_info_addr)
     console__printf("Kernel End (phyaddr) = 0x%x\n", kmemlayout.phyaddr_kernel_end);
 
     console__printf("kgdtr addr = 0x%p\n", &kgdtr);
+*/
 
     __init_framelist(kmemlayout.memsize_nframes, kmemlayout.phyaddr_kernel_end);
 
@@ -262,8 +264,10 @@ void mem__paging_init(uint32_t multiboot_info_addr)
     __set_frame_state(kmemlayout.phyaddr_kernel_start, kmemlayout.phyaddr_kernel_end-kmemlayout.phyaddr_kernel_start, FRAME_KUSED);
     __set_frame_state((uint32_t)kframelist, (uint32_t)nb_frames*sizeof(frame_t), FRAME_KUSED);  
 
+/*
     __dump_free_area();
-
+*/
+    
     // * paging: map one-to-one first 4Mb of ram *
 
     // get 1 frame each for one page dir and one page table (1024*4b)

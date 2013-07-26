@@ -68,13 +68,3 @@ inline void outb(uint8_t value, uint16_t port)
 {
     asm volatile("outb %0, %1" : : "a" (value), "dN" (port));
 }
-
-inline void cli(void)
-{
-    asm volatile("cli");
-}
-
-inline void sti(void)
-{
-    asm volatile("sti");
-}

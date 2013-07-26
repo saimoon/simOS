@@ -1,8 +1,8 @@
 CC = i586-elf-gcc
 AS = i586-elf-as
-CFLAGS = -I./include -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+CFLAGS = -I./include -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-function
 
-OBJS = boot.o utils.o console.o mem.o int.o int_vectors.o multiboot.o kernel.o
+OBJS = boot.o utils.o console.o mem.o int.o int_vectors.o timer.o kbd.o multiboot.o kernel.o
 
 all: simOS.bin
 
