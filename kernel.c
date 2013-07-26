@@ -91,6 +91,9 @@ void kernel_main(uint32_t magic, uint32_t multiboot_info_addr)
     int__idt_init();
     console__printf("* Init Interrupts\n");
 
+    // attach page fault irq handler
+    mem__pagefaultirq();
+
     // Init TIMER
     timer__init();
     console__printf("* Init Timer\n");
@@ -107,11 +110,10 @@ void kernel_main(uint32_t magic, uint32_t multiboot_info_addr)
     // test interrupts 
     __asm__ ("int $34");
 */
-/* 
     // test interrupts
-    void (*x)(void) = 0x00000000;
+//    void (*x)(void) = 0x00000000;             // ISR6: invalid opcode
+    void (*x)(void) = (void *)0xFFFF0000;       // ISR14: page fault
     x();
-*/
 
     // Infinite loop
     while(1);

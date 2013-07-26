@@ -167,6 +167,7 @@ void mem__bss_init(void);
 void mem__gdt_init(void);
 void mem__paging_init(uint32_t multiboot_info_addr);
 void mem__dump_map(void);
+void mem__pagefaultirq(void);
 
 
 #endif /* SIMOS_MEM_H */

@@ -23,9 +23,12 @@
 #include <stdint.h>
 
 #include "utils.h"
+#include "kassert.h"
 #include "console.h"
 #include "multiboot.h"
 #include "mem.h"
+#include "int_vectors.h"
+#include "int.h"
 #include "utlist.h"
 
 
@@ -42,6 +45,55 @@ uint32_t nb_frames;                 // Total number of frames
 frame_t *kframelist;                // Frame list
 free_area_t free_area[BUDDY_MAX_ORDER];
 
+
+
+/* ====== IRQ handler functions ====== */
+
+// Page Fault interrupt handler
+void isr_pagefault(uint8_t irq, uint32_t *regs)
+{
+    uint32_t faulting_address;
+    uint32_t error_code;
+    uint8_t present;
+    uint8_t rw;
+    uint8_t us;
+    uint8_t reserved;
+
+    // the fault address is stored in the CR2 register
+    __asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
+
+    error_code = (uint32_t)regs[REG_ERRCODE];
+
+    // Decode information from the error code
+    present  = (uint8_t)!(error_code & 0x1);
+    rw       = (uint8_t)(error_code & 0x2);
+    us       = (uint8_t)(error_code & 0x4);
+    reserved = (uint8_t)(error_code & 0x8);
+
+    console__printf("PAGE FAULT: 0x%x ", faulting_address);
+
+    if (present) {
+        console__write("PRESENT ");
+    }
+
+    if (rw) {
+        console__write("READ-ONLY ");
+    }
+
+    if (us) {
+        console__write("USER-MODE ");
+    } 
+    else {
+        console__write("KERNEL-MODE ");
+    }
+    
+    if (reserved) {
+        console__write("RESERVED ");
+    }
+
+    console__write("\n");
+    HALT();
+}
 
 
 /* ====== PRIVATE mem functions ====== */
@@ -267,7 +319,7 @@ void mem__paging_init(uint32_t multiboot_info_addr)
 /*
     __dump_free_area();
 */
-    
+
     // * paging: map one-to-one first 4Mb of ram *
 
     // get 1 frame each for one page dir and one page table (1024*4b)
@@ -299,6 +351,18 @@ void mem__paging_init(uint32_t multiboot_info_addr)
 ***/
 
 }
+
+
+// attach ISR14 to page fault irq handler
+void mem__pagefaultirq(void)
+{
+    // Attach IRQ0 to the timer interrupt handler
+    int__irq_attach(ISR14, (irqvfunc_t)isr_pagefault);
+
+    // Enable IRQ0
+    int__enable_irq(ISR14);
+}
+
 
 void mem__dump_map(void)
 {
