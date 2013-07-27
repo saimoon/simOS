@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if !defined(__cplusplus)
-#include <stdbool.h> /* C doesn't have booleans by default. */
-#endif
+// standard includes
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+// simOS includes
 #include "utils.h"
 
 
@@ -38,6 +38,7 @@ void memset(void *buf, uint8_t val, size_t len)
     }
 }
 
+
 void memcpy(void *dst, const void *src, size_t len)
 {
     uint8_t *d = dst;
@@ -49,6 +50,7 @@ void memcpy(void *dst, const void *src, size_t len)
     }
 }
 
+
 size_t strlen(const char* str)
 {
     size_t ret = 0;
@@ -57,12 +59,14 @@ size_t strlen(const char* str)
     return ret;
 }
 
+
 inline uint8_t inb(uint16_t port)
 {
     uint8_t value;
     asm volatile("inb %1, %0" : "=a" (value) : "dN" (port));
     return(value);
 }
+
 
 inline void outb(uint8_t value, uint16_t port)
 {

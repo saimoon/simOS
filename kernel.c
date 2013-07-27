@@ -16,31 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if !defined(__cplusplus)
-#include <stdbool.h> /* C doesn't have booleans by default. */
-#endif
+// standard includes
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
-/* Check if the compiler thinks if we are targeting the wrong operating system. */
+// Check if the compiler thinks if we are targeting the wrong operating system
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
 #endif
- 
-#include "utils.h"
-#include "kassert.h"
+
+// simOS includes
 #include "console.h"
+#include "kassert.h"
+#include "utils.h"
+#include "multiboot.h"
 #include "mem.h"
 #include "int_vectors.h"
 #include "int.h"
 #include "timer.h"
 #include "kbd.h"
-#include "multiboot.h"
-
 
 #if defined(__cplusplus)
 extern "C" /* Use C linkage for kernel_main. */
 #endif
+
 
 
 /* ====== PUBLIC kernel functions ====== */

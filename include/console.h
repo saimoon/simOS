@@ -19,16 +19,22 @@
 #ifndef SIMOS_CONSOLE_H
 #define SIMOS_CONSOLE_H
 
+// standard includes
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
+
+
+// VGA defines
 #define VGA_VIDEOMEM 0xB8000
 #define VGA_NUMCOLS 80
 #define VGA_NUMROWS 25
-#define MAXDIGITS 39
 #define VGA_BYTES_PER_ROW (VGA_NUMCOLS * 2)
- 
+#define MAXDIGITS 39
 #define ROW_ADDR(row) (((uint8_t *) VGA_VIDEOMEM) + ((row) * VGA_BYTES_PER_ROW))
 
-// Hardware text mode color constants.
+// Hardware text mode color constants
 enum vga_color
 {
     COLOR_BLACK = 0,
@@ -48,6 +54,7 @@ enum vga_color
     COLOR_LIGHT_BROWN = 14,
     COLOR_WHITE = 15,
 };
+
 
 
 /* PUBLIC console functions */

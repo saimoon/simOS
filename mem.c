@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if !defined(__cplusplus)
-#include <stdbool.h> /* C doesn't have booleans by default. */
-#endif
+// standard includes
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+// simOS includes
 #include "utils.h"
 #include "kassert.h"
 #include "console.h"
@@ -35,14 +35,14 @@
 
 /* ====== Globals ====== */
 
-gdt_t  kgdt[GDT_NUMBERS];
-gdtr_t kgdtr;
+gdt_t  kgdt[GDT_NUMBERS];               // GDT
+gdtr_t kgdtr;                           // GDTR
 
-uint32_t *kpage_dir;                // Page directory
-uint32_t *kpage_tab;                // Page Table
+uint32_t *kpage_dir;                    // Page directory
+uint32_t *kpage_tab;                    // Page Table
 
-uint32_t nb_frames;                 // Total number of frames
-frame_t *kframelist;                // Frame list
+uint32_t    nb_frames;                  // Total number of frames
+frame_t *   kframelist;                 // Frame list
 free_area_t free_area[BUDDY_MAX_ORDER];
 
 
@@ -96,6 +96,7 @@ void isr_pagefault(uint8_t irq, uint32_t *regs)
 }
 
 
+
 /* ====== PRIVATE mem functions ====== */
 
 // Fill a GDT descriptor with its data
@@ -108,6 +109,7 @@ static void __set_gdt(uint32_t num, uint32_t base, uint32_t limit, uint8_t acces
     kgdt[num].granularity   = ((limit >> 16) & 0x0F) | (gran & 0xF0);
     kgdt[num].access        = access;
 }
+
 
 // Load GDT on cpu using gdtl register
 static inline void __load_gdt(void)
@@ -125,6 +127,7 @@ static inline void __load_gdt(void)
     );
 }
 
+
 // Extract memory layout info from multiboot struct filled at boot by GRUB
 static void __get_multiboot_info(multiboot_info_t *mbi, memphy_layout_t *layout)
 {
@@ -135,6 +138,7 @@ static void __get_multiboot_info(multiboot_info_t *mbi, memphy_layout_t *layout)
     layout->phyaddr_kernel_end = ALIGN_PAGE((uint32_t) &__BSS_END);
 }
 
+
 static void __init_freearea()
 {
     uint32_t i;
@@ -144,6 +148,7 @@ static void __init_freearea()
         free_area[i].map = 0;
     }
 }
+
 
 static void __init_framelist(uint32_t nframes, uint32_t kernel_end_addr)
 {
@@ -156,6 +161,7 @@ static void __init_framelist(uint32_t nframes, uint32_t kernel_end_addr)
         kframelist[i].next = kframelist[i].prev = NULL;
     }
 }
+
 
 static uint32_t *__get_kframe(void)
 {
@@ -173,6 +179,7 @@ static uint32_t *__get_kframe(void)
     hlt();
     return NULL;
 }
+
 
 static void __set_frame_state(uint32_t start, uint32_t len, frame_state_t state)
 {
@@ -220,6 +227,7 @@ static void __set_frame_state(uint32_t start, uint32_t len, frame_state_t state)
     }
 }
 
+
 static void __dump_free_area()
 {
     uint32_t i;
@@ -232,6 +240,7 @@ static void __dump_free_area()
         console__printf("Order[%d] num_frame=%d\n", i, count);
     }
 }
+
 
 static void __scan_memory_map(multiboot_info_t *mbi)
 {
@@ -266,6 +275,7 @@ void mem__bss_init(void)
     memset(&__BSS_START, '\0', (&__BSS_END - &__BSS_START));
 }
 
+
 // Initialize GDT  with a flat memory layout model
 void mem__gdt_init(void)
 {
@@ -281,6 +291,7 @@ void mem__gdt_init(void)
 
     __load_gdt();
 }
+
 
 // Initialize paging (MMU)
 void mem__paging_init(uint32_t multiboot_info_addr)
@@ -349,7 +360,6 @@ void mem__paging_init(uint32_t multiboot_info_addr)
     console__printf("kpage_tab = 0x%x\n", kpage_tab);
     console__printf("kframelist = 0x%x\n", kframelist);
 ***/
-
 }
 
 

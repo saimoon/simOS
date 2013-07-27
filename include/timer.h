@@ -19,6 +19,12 @@
 #ifndef SIMOS_TIMER_H
 #define SIMOS_TIMER_H
 
+// standard includes
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+
 
 /* Programmable interval timer (PIT) model 8253 or 8254 */
 #define PIT_CLOCK   1193180         // PIT input clock
@@ -53,6 +59,7 @@
 #define PIT_OCW_COUNTER_0       (0 << PIT_OCW_COUNTER_SHIFT)
 #define PIT_OCW_COUNTER_1       (1 << PIT_OCW_COUNTER_SHIFT)
 #define PIT_OCW_COUNTER_2       (2 << PIT_OCW_COUNTER_SHIFT)
+
 
 
 /* PUBLIC int functions */

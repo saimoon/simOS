@@ -19,7 +19,17 @@
 #ifndef SIMOS_UTILS_H
 #define SIMOS_UTILS_H
 
+// standard includes
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+
+
+// utils defines
 #define hlt() __asm__("hlt");
+
+
 
 /* PUBLIC utils functions */
 void memset(void *buf, uint8_t val, size_t len);

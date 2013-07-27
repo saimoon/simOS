@@ -19,7 +19,13 @@
 #ifndef SIMOS_KBD_H
 #define SIMOS_KBD_H
 
+// standard includes
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
+
+// keyboard defines
 #define KBD_IRQ        0x01
 
 #define STATUS_PORT    0x64

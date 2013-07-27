@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if !defined(__cplusplus)
-#include <stdbool.h> /* C doesn't have booleans by default. */
-#endif
+// standard includes
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+// simOS includes
 #include "utils.h"
 #include "kassert.h"
 #include "int_vectors.h"
@@ -32,6 +32,7 @@
 
 /* ====== Globals ====== */
 
+// US keyboard array
 uint8_t kbd_us[128] =
 {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',     /* 9 */
@@ -73,6 +74,7 @@ uint8_t kbd_us[128] =
 };  
 
 
+
 /* ====== IRQ handler functions ====== */
 
 // keyboard interrupt handler
@@ -82,8 +84,9 @@ void isr_kbd(uint8_t irq, uint32_t *regs)
     if ( !(ch & 0x80) )
         console__printf("Key: %c\n", kbd_us[ch]);
     
-    return;
+//    <TODO/>  
 }
+
 
 
 /* ====== PRIVATE kbd functions ====== */
@@ -113,6 +116,6 @@ void kbd__init(void)
     // Clear the output buffer
     inb(KBD_OUT_BUF);
 
-  	// Enable IRQ1
-  	int__enable_irq(IRQ1);
+    // Enable IRQ1
+    int__enable_irq(IRQ1);
 }

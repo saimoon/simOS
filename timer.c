@@ -16,17 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if !defined(__cplusplus)
-#include <stdbool.h> /* C doesn't have booleans by default. */
-#endif
+// standard includes
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+// simOS includes
 #include "utils.h"
 #include "kassert.h"
 #include "int_vectors.h"
 #include "int.h"
 #include "timer.h"
+
 
 
 /* Programmable interval timer (PIT)
@@ -53,7 +54,8 @@
 void isr_timer(uint8_t irq, uint32_t *regs)
 {
 //    console__printf("tick\n");
-    return;
+
+//    <TODO/>  
 }
 
 
@@ -62,20 +64,20 @@ void isr_timer(uint8_t irq, uint32_t *regs)
 
 void timer__init(void)
 {
-	// uint32_t to avoid compile time overflow errors
-  	uint32_t divisor = PIT_DIVISOR;
+    // uint32_t to avoid compile time overflow errors
+    uint32_t divisor = PIT_DIVISOR;
     KASSERT(divisor <= 0xffff);
 
-  	// Attach IRQ0 to the timer interrupt handler
-  	int__irq_attach(IRQ0, (irqvfunc_t)isr_timer);
+    // Attach IRQ0 to the timer interrupt handler
+    int__irq_attach(IRQ0, (irqvfunc_t)isr_timer);
 
-  	// Send the command byte to configure counter 0
-  	outb(PIT_OCW_MODE_SQUARE|PIT_OCW_RL_DATA|PIT_OCW_COUNTER_0, PIT_REG_COMMAND);
+    // Send the command byte to configure counter 0
+    outb(PIT_OCW_MODE_SQUARE|PIT_OCW_RL_DATA|PIT_OCW_COUNTER_0, PIT_REG_COMMAND);
 
-  	// Set the PIT input frequency divisor
-  	outb((uint8_t)(divisor & 0xff),  PIT_REG_COUNTER0);
-  	outb((uint8_t)((divisor >> 8) & 0xff), PIT_REG_COUNTER0);
+    // Set the PIT input frequency divisor
+    outb((uint8_t)(divisor & 0xff),  PIT_REG_COUNTER0);
+    outb((uint8_t)((divisor >> 8) & 0xff), PIT_REG_COUNTER0);
 
-  	// And enable IRQ0
-  	int__enable_irq(IRQ0);
+    // And enable IRQ0
+    int__enable_irq(IRQ0);
 }

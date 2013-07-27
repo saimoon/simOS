@@ -19,6 +19,12 @@
 #ifndef SIMOS_INT_H
 #define SIMOS_INT_H
 
+// standard includes
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+
 
 // Common register save structure created by ISR/IRQ interrupt processing
 #define REG_DS            (0)  /* Data segment selector */
@@ -51,11 +57,11 @@
 #define PIC_ICW4_8086           0x01
 #define PIC_ICW4_AEOI           0x02
 #define PIC_EOI                 0x20
-#define PIC_ICW3_M_CASCADE  	0x04
-#define PIC_ICW3_S_CASCADE  	0x02
+#define PIC_ICW3_M_CASCADE      0x04
+#define PIC_ICW3_S_CASCADE      0x02
 #define IRQ0_VECTOR             0x20
 #define IRQ8_VECTOR             0x28
-#define PIC_MASTER_MASK         0xFB 	// We can't disable IRQ2 because slave it's there
+#define PIC_MASTER_MASK         0xFB    // We can't disable IRQ2 because slave it's there
 #define PIC_SLAVE_MASK          0xFF
 
 
@@ -78,12 +84,12 @@
                                           /* Bit 15: Reserved */
 
 
+#define IDT_ENTRIES 0xFF            // number of IDT entries
+#define DEF_INTGATE_FLAGS 0x8E      // P=1 DPL=0 (interrupt gate descriptor)
 
-#define IDT_ENTRIES 0xFF			// number of IDT entries
-#define DEF_INTGATE_FLAGS 0x8E		//P=1 DPL=0 (interrupt gate descriptor)
 
 
-// Interrupt Descriptor Table
+// Interrupt Descriptor Table entry
 typedef
 struct idt
 {
@@ -94,6 +100,7 @@ struct idt
    uint16_t hibase;
 } __attribute__((packed))
 idt_t;
+
 
 // Interrupt Descriptor Table Register
 typedef
@@ -107,6 +114,7 @@ idtr_t;
 
 // IRQ vector function type
 typedef void (*irqvfunc_t)(uint8_t irq, uint32_t *context);
+
 
 
 //  Interrupt Vectors

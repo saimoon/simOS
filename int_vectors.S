@@ -16,13 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// simOS includes
 #include "int_vectors.h"
 
+// Kernel data descriptor number (copy the value from "mem.h")
 #define KERNEL_DS   $0x10
 
 
 .text
 
+// Initial ISR/IRQ handlers
 .globl  isr_handler
 .globl  irq_handler
 
@@ -37,6 +40,7 @@ vector_isr\intno:
     jmp     isr_common                      // Go to the common ISR handler code
 .endm
 
+
 // Stub for an ISR with its own error code 
 .macro ISR_ERRCODE, intno
 .globl vector_isr\intno
@@ -45,6 +49,7 @@ vector_isr\intno:
     push    $\intno                         // Push the interrupt number
     jmp     isr_common                      // Go to the common ISR handler code
 .endm
+
 
 // Stub for an IRQ
 //   the first parameter is the IRQ number, 
@@ -112,7 +117,7 @@ IRQ                 14,     IRQ14
 IRQ                 15,     IRQ15
 
 
-// Common ISR logic. 
+// Common ISR logic.
 // It saves the processor state, sets up for kernel mode data segments, 
 // calls the C-level fault handler, and finally restores the stack frame.
 .type isr_common, @function

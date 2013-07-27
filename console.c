@@ -16,15 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if !defined(__cplusplus)
-#include <stdbool.h> /* C doesn't have booleans by default. */
-#endif
+// standard includes
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdarg.h>
 
-#include "utils.h"
+// simOS includes
 #include "console.h"
+#include "utils.h"
+
 
 
 /* ====== Globals ====== */
@@ -35,12 +36,14 @@ uint8_t console_color;
 uint16_t* console_buffer;
 
 
+
 /* ====== PRIVATE console functions ====== */
 
 static uint8_t __make_color(enum vga_color fg, enum vga_color bg)
 {
     return fg | bg << 4;
 }
+
  
 static uint16_t __make_vgaentry(char c, uint8_t color)
 {
@@ -48,6 +51,7 @@ static uint16_t __make_vgaentry(char c, uint8_t color)
     uint16_t color16 = color;
     return c16 | color16 << 8;
 }
+
  
 static void __ultoa(char *buf, unsigned long value)
 {
@@ -71,6 +75,7 @@ static void __ultoa(char *buf, unsigned long value)
     buf[ndigits] = '\0';
 }
 
+
 static void __ltoa(char *buf, long value)
 {
     unsigned raw;
@@ -86,6 +91,7 @@ static void __ltoa(char *buf, long value)
     __ultoa(buf, raw);
 }
 
+
 static void __ltox(char *buf, long value)
 {
     int i;
@@ -94,6 +100,7 @@ static void __ltox(char *buf, long value)
     }
     *buf = '\0';
 }
+
 
 static void __scroll(void)
 {
@@ -107,7 +114,6 @@ static void __scroll(void)
     // clear last row
     memset(ROW_ADDR(VGA_NUMROWS-1), '\0', VGA_BYTES_PER_ROW);
 }
-
 
 
 
@@ -128,17 +134,20 @@ void console__initialize()
         }
     }
 }
+
  
 void console__setcolor(uint8_t color)
 {
     console_color = color;
 }
+
  
 void console__putentryat(char c, uint8_t color, size_t x, size_t y)
 {
     const size_t index = y * VGA_NUMCOLS + x;
     console_buffer[index] = __make_vgaentry(c, color);
 }
+
  
 void console__putchar(char c)
 {
@@ -172,6 +181,7 @@ void console__putchar(char c)
     }
 }
  
+
 void console__write(const char* data)
 {
     size_t datalen = strlen(data);

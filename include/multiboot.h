@@ -19,6 +19,12 @@
 #ifndef SIMOS_MULTIBOOT_H
 #define SIMOS_MULTIBOOT_H
 
+// standard includes
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+
 
 /* magic number for multiboot header */
 #define MULTIBOOT_HEADER_MAGIC      0x1BADB002
@@ -110,6 +116,7 @@ typedef struct memory_map {
 } memory_map_t;
 
 #endif              /* ! ASM */
+
 
 
 /* PUBLIC multiboot functions */

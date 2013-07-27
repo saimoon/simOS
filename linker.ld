@@ -24,55 +24,55 @@ ENTRY(_start)
    kernel image. */
 SECTIONS
 {
-	/* Begin putting sections at 1 MiB, a conventional place for kernels to be
-	   loaded at by the bootloader. */
-	. = 1M;
+    /* Begin putting sections at 1 MiB, a conventional place for kernels to be
+       loaded at by the bootloader. */
+    . = 1M;
 
-	/* First put the multiboot header, as it is required to be put very early
-	   early in the image or the bootloader won't recognize the file format.
-	   Next we'll put the .text section. */
-	__TEXT_START = ALIGN(4K);
-	.text BLOCK(4K) : ALIGN(4K)
-	{
-		*(.multiboot)
-		*(.text)
-	}
-	__TEXT_END = .;
+    /* First put the multiboot header, as it is required to be put very early
+       early in the image or the bootloader won't recognize the file format.
+       Next we'll put the .text section. */
+    __TEXT_START = ALIGN(4K);
+    .text BLOCK(4K) : ALIGN(4K)
+    {
+        *(.multiboot)
+        *(.text)
+    }
+    __TEXT_END = .;
 
-	/* Read-only data. */
-	__RODATA_START = ALIGN(4K);
-	.rodata BLOCK(4K) : ALIGN(4K)
-	{
-		*(.rodata)
+    /* Read-only data. */
+    __RODATA_START = ALIGN(4K);
+    .rodata BLOCK(4K) : ALIGN(4K)
+    {
+        *(.rodata)
         *(.rodata.str1.1)
         *(.rodata.str1.4)
-	}
-	__RODATA_END = .;
+    }
+    __RODATA_END = .;
 
-	/* Read-write data (initialized) */
-	__DATA_START = ALIGN(4K);
-	.data BLOCK(4K) : ALIGN(4K)
-	{
-		*(.data)
-	}
-	__DATA_END = .;
+    /* Read-write data (initialized) */
+    __DATA_START = ALIGN(4K);
+    .data BLOCK(4K) : ALIGN(4K)
+    {
+        *(.data)
+    }
+    __DATA_END = .;
 
-	/* Read-write data (uninitialized) and stack */
-	__BSS_START = ALIGN(4K);
-	.bss BLOCK(4K) : ALIGN(4K)
-	{
-		*(COMMON)
-		*(.bss)
-		*(.bootstrap_stack)
-	}
-	__BSS_END = .;
+    /* Read-write data (uninitialized) and stack */
+    __BSS_START = ALIGN(4K);
+    .bss BLOCK(4K) : ALIGN(4K)
+    {
+        *(COMMON)
+        *(.bss)
+        *(.bootstrap_stack)
+    }
+    __BSS_END = .;
 
-	/* The compiler may produce other sections, by default it will put them in
-	   a segment with the same name. Simply add stuff here as needed. */
-	/DISCARD/ :
-	{
-		*(.comment)
-		*(.eh_frame)
-	}
+    /* The compiler may produce other sections, by default it will put them in
+       a segment with the same name. Simply add stuff here as needed. */
+    /DISCARD/ :
+    {
+        *(.comment)
+        *(.eh_frame)
+    }
 
 }

@@ -18,14 +18,15 @@
 
 /* http://www.gnu.org/software/grub/manual/multiboot/multiboot.html */
 
-#if !defined(__cplusplus)
-#include <stdbool.h> /* C doesn't have booleans by default. */
-#endif
+// standard includes
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+// simOS includes
 #include "multiboot.h"
 #include "console.h"
+
 
 
 /* ====== PUBLIC multiboot functions ====== */

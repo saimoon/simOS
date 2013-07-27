@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if !defined(__cplusplus)
-#include <stdbool.h> /* C doesn't have booleans by default. */
-#endif
+// standard includes
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+// simOS includes
 #include "utils.h"
 #include "kassert.h"
 #include "utlist.h"
@@ -32,12 +32,14 @@
 #include "int.h"
 
 
+
 /* ====== Globals ====== */
 
 idt_t  g_kidt[IDT_ENTRIES+1];           // Interrupt Descriptor Table
 idtr_t g_kidtr;                         // Interrupt Descriptor Table Register
 
 irqvfunc_t g_irqvector[NR_IRQS];        // IRQ vector function table
+
 
 
 /* ====== IRQ handler functions ====== */
@@ -51,7 +53,7 @@ void irq_unhandled_isr(uint8_t irq, uint32_t *context)
 
 
 // Dispatch irq to its custom vector handler
-static uint32_t *irq_dispatch(uint8_t irq, uint32_t *regs)
+uint32_t *irq_dispatch(uint8_t irq, uint32_t *regs)
 {
     irqvfunc_t vector;
 
