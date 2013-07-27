@@ -1,3 +1,7 @@
 DONE) Implement irq_attach() and irq_dispatch()
 DONE) Implement timer init and irq handler
 DONE) Implement keyboard irq handler
+*) Implement tasks
+*) Implement initial task
+*) Implement scheduler
+*) Separate arch-dependent code
