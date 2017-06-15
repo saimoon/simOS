@@ -35,4 +35,4 @@ $ gdb ./simOS.bin
 (gdb) break kernel_main
 ```
 
-comments to: simone@piemontewireless.net
+comments to: simone.rotondo@gmail.com
